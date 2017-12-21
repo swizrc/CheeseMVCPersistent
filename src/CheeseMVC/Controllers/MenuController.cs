@@ -7,6 +7,7 @@ using CheeseMVC.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CheeseMVC.ViewModels;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CheeseMVC.Controllers
 {
@@ -36,16 +37,56 @@ namespace CheeseMVC.Controllers
 
             Menu theMenu = context.Menus.Single(c => c.ID == id);
 
-            return View();
+            ViewMenuViewModel viewMenuViewModel = new ViewMenuViewModel { Menu = theMenu, Items = items };
+
+            return View(viewMenuViewModel);
         }
 
         public IActionResult AddItem(int id)
         {
             Menu theMenu = context.Menus.Single(c => c.ID == id);
 
-            AddMenuViewModel addMenuViewModel = new AddMenuViewModel();
+            AddMenuItemViewModel addMenuItemViewModel = new AddMenuItemViewModel (context.Cheeses.ToList(),theMenu);
 
-            return View(addMenuViewModel);
+            return View(addMenuItemViewModel);
+        }
+
+        [HttpPost]
+        public IActionResult AddItem(AddMenuItemViewModel addMenuItemViewModel)
+        {
+
+            if (ModelState.IsValid)
+            {
+                var cheeseID = addMenuItemViewModel.cheeseID;
+                var menuID = addMenuItemViewModel.menuID;
+
+                IList<CheeseMenu> existingItems = context.CheeseMenus
+                .Where(cm => cm.CheeseID == addMenuItemViewModel.cheeseID)
+                .Where(cm => cm.MenuID == addMenuItemViewModel.menuID).ToList();
+
+                if(existingItems.Count == 0)
+                {
+                    CheeseMenu menuItem = new CheeseMenu
+                    {
+                        Cheese = context.Cheeses.Single(c => c.ID == cheeseID),
+                        Menu = context.Menus.Single(m => m.ID == menuID)
+                    };
+                    context.CheeseMenus.Add(menuItem);
+                    context.SaveChanges();
+                }
+                return Redirect("/Menu/ViewMenu/" + menuID.ToString());
+            }
+
+            IEnumerable<Cheese> cheeses = context.Cheeses.ToList();
+
+            addMenuItemViewModel.Cheeses = new List<SelectListItem>();
+
+            foreach (var cheese in cheeses)
+            {
+                addMenuItemViewModel.Cheeses.Add(new SelectListItem { Value = cheese.ID.ToString(), Text = cheese.Name });
+            }
+
+            return View(addMenuItemViewModel);
         }
 
         public IActionResult Add()
