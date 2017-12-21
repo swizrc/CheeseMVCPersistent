@@ -24,6 +24,14 @@ namespace CheeseMVC.Controllers
             return View(Categories);
         }
 
+        public IActionResult Add()
+        {
+            AddCategoryViewModel addCategoryViewModel = new AddCategoryViewModel();
+
+            return View(addCategoryViewModel);
+        }
+
+        [HttpPost]
         public IActionResult Add(AddCategoryViewModel addCategoryViewModel)
         {
             if (ModelState.IsValid)

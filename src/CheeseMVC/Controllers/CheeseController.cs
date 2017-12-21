@@ -5,6 +5,7 @@ using CheeseMVC.ViewModels;
 using CheeseMVC.Data;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CheeseMVC.Controllers
 {
@@ -36,19 +37,28 @@ namespace CheeseMVC.Controllers
         {
             if (ModelState.IsValid)
             {
+                CheeseCategory category = context.Categories.Single(c => c.ID == addCheeseViewModel.CategoryID);
                 // Add the new cheese to my existing cheeses
                 Cheese newCheese = new Cheese
                 {
                     Name = addCheeseViewModel.Name,
                     Description = addCheeseViewModel.Description,
-                    //Type = addCheeseViewModel.Type
-                    Category = context.Categories.Single(c => c.ID == addCheeseViewModel.CategoryID)
+                    Category = category
                 };
 
                 context.Cheeses.Add(newCheese);
                 context.SaveChanges();
 
                 return Redirect("/Cheese");
+            }
+
+            IEnumerable<CheeseCategory> categories = context.Categories.ToList();
+
+            addCheeseViewModel.Categories = new List<SelectListItem>();
+
+            foreach (var category in categories)
+            {
+                addCheeseViewModel.Categories.Add(new SelectListItem { Value = category.ID.ToString(), Text = category.Name });
             }
 
             return View(addCheeseViewModel);
